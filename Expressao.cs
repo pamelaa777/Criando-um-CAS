@@ -16,8 +16,6 @@ public abstract class Expressao
 
     public static implicit operator Expressao(int v) => new Numero(v);
     public static implicit operator Expressao(string s) => new Simbolo(s);   
-
-
 }
 
 public class Numero : Expressao
@@ -59,7 +57,6 @@ public class Soma : Expressao
        }
        return this;
     }
-           
 }
 
 public class Subtracao : Expressao
@@ -124,5 +121,62 @@ public class Divisao : Expressao
     public override Expressao Simplificar()
     {
         return this;
+    }
+}
+
+// Implementação de números complexos
+public class Complexo : Expressao
+{
+    public double Real { get; }
+    public double Imaginario { get; }
+
+    public Complexo(double real, double imaginario)
+    {
+        Real = real;
+        Imaginario = imaginario;
+    }
+
+    public override string ToString() => $"{Real} + {Imaginario}i";
+
+    public override Expressao Derivar(Simbolo x) => new Complexo(0, 0);
+
+    public override Expressao Simplificar() => this;
+
+    public static Complexo operator +(Complexo a, Complexo b) => new Complexo(a.Real + b.Real, a.Imaginario + b.Imaginario);
+    public static Complexo operator -(Complexo a, Complexo b) => new Complexo(a.Real - b.Real, a.Imaginario - b.Imaginario);
+    public static Complexo operator *(Complexo a, Complexo b) => new Complexo(a.Real * b.Real - a.Imaginario * b.Imaginario, a.Real * b.Imaginario + a.Imaginario * b.Real);
+    public static Complexo operator /(Complexo a, Complexo b)
+    {
+        double denom = b.Real * b.Real + b.Imaginario * b.Imaginario;
+        return new Complexo((a.Real * b.Real + a.Imaginario * b.Imaginario) / denom, (a.Imaginario * b.Real - a.Real * b.Imaginario) / denom);
+    }
+}
+
+// Função para substituir símbolos em uma expressão
+public static class ExpressaoExtensions
+{
+    public static Expressao SubstituirSimbolo(this Expressao expressao, string simbolo, Expressao substituto)
+    {
+        if (expressao is Simbolo s && s.ToString() == simbolo)
+        {
+            return substituto;
+        }
+        if (expressao is Soma soma)
+        {
+            return new Soma(soma.a.SubstituirSimbolo(simbolo, substituto), soma.b.SubstituirSimbolo(simbolo, substituto)).Simplificar();
+        }
+        if (expressao is Subtracao subtracao)
+        {
+            return new Subtracao(subtracao.a.SubstituirSimbolo(simbolo, substituto), subtracao.b.SubstituirSimbolo(simbolo, substituto)).Simplificar();
+        }
+        if (expressao is Multiplicacao multiplicacao)
+        {
+            return new Multiplicacao(multiplicacao.a.SubstituirSimbolo(simbolo, substituto), multiplicacao.b.SubstituirSimbolo(simbolo, substituto)).Simplificar();
+        }
+        if (expressao is Divisao divisao)
+        {
+            return new Divisao(divisao.a.SubstituirSimbolo(simbolo, substituto), divisao.b.SubstituirSimbolo(simbolo, substituto)).Simplificar();
+        }
+        return expressao;
     }
 }
